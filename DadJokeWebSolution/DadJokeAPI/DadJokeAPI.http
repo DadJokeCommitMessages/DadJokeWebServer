@@ -1,0 +1,11 @@
+@DadJokeAPI_HostAddress = http://localhost:5282
+
+### DadJokes
+
+GET {{DadJokeAPI_HostAddress}}/DadJokes/
+Accept: application/json
+
+### Users
+
+GET {{DadJokeAPI_HostAddress}}/Users/
+Accept: application/json
