@@ -1,6 +1,0 @@
-CREATE TABLE DadJoke (
-    DadID SERIAL PRIMARY KEY,
-    Joke VARCHAR(255) NOT NULL,
-    UserID INT NOT NULL,
-    CONSTRAINT fk_dad_joke_author FOREIGN KEY (UserID) REFERENCES User(UserID)
-);

@@ -6,6 +6,7 @@ using Microsoft.EntityFrameworkCore;
 
 public class ApplicationDbContext(DbContextOptions options) : DbContext(options)
 {
-    public DbSet<DadJoke> DadJokes { get; set; }
-    public DbSet<User> Users { get; set; }
+    public DbSet<User> User { get; set; }
+    public DbSet<JokeType> JokeType { get; set; }
+    public DbSet<Joke> Joke { get; set; }
 }
