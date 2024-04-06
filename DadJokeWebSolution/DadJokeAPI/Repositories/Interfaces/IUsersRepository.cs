@@ -1,12 +1,13 @@
 using DadJokeAPI.Models.Domain;
+using DadJokeAPI.Results;
 
 namespace DadJokeAPI.Repositories.Interfaces;
 
 public interface IUsersRepository
 {
 
-    Task<User?> GetUserByEmail(string emailAddress);
+    Result<User> GetUserByEmail(string emailAddress);
 
-    Task<IEnumerable<Joke>> GetAllJokesByUserId(int id);
+    Result<IEnumerable<Joke>> GetAllJokesByUserId(int userId);
 
 }

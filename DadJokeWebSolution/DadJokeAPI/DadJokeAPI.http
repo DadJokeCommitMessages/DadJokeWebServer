@@ -1,5 +1,10 @@
 @DadJokeAPI_HostAddress = http://localhost:5282
 
+# Jokes
+### Get a joke (default joketype = random)
+
+GET {{DadJokeAPI_HostAddress}}/api/joke?jokeType=random
+
 ### Create Joke
 
 POST {{DadJokeAPI_HostAddress}}/api/Jokes
@@ -13,4 +18,4 @@ Content-Type: application/json
 
 ### Get Random Joke
 
-GET {{DadJokeAPI_HostAddress}}/api/Jokes?Random
+GET {{DadJokeAPI_HostAddress}}/api/joke

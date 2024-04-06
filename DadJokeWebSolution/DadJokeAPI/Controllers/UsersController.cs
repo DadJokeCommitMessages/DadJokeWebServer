@@ -1,5 +1,8 @@
+using DadJokeAPI.Converters;
+using DadJokeAPI.Models.Domain;
 using DadJokeAPI.Models.DTO;
 using DadJokeAPI.Repositories.Interfaces;
+using DadJokeAPI.Results;
 using Microsoft.AspNetCore.Mvc;
 
 namespace DadJokeAPI.Controllers;
@@ -8,25 +11,31 @@ namespace DadJokeAPI.Controllers;
 public class UsersController : Controller
 {
     private readonly IUsersRepository _usersRepository;
+    private readonly UsersConverter _usersConverter;
 
-    public UsersController(IUsersRepository usersRepository)
+    public UsersController(IUsersRepository usersRepository, UsersConverter usersConverter)
     {
         _usersRepository = usersRepository;
+        _usersConverter = usersConverter;
     }
 
     [HttpGet]
-    [Route("{userEmail}/jokes")]
-    public async Task<IActionResult> GetJokesByUser([FromRoute] string userEmail)
+    [Route("/jokes")]
+    public IActionResult GetJokesByUser()
     {
-        var existingUser = await _usersRepository.GetUserByEmail(userEmail);
-        if (existingUser is null)
-            return NotFound("User does not exist.");
+        Result<User> loggedInUserResult = _usersConverter.Convert();
         
-        // get all the jokes that belong to the person
-        var userJokes = await _usersRepository.GetAllJokesByUserId(existingUser.UserID);
+        if (loggedInUserResult.IsFailure) 
+            return NotFound(loggedInUserResult.ValidationErrors);
+        
+        Result<IEnumerable<Joke>> userJokesResult = _usersRepository.GetAllJokesByUserId(loggedInUserResult.Value.UserID);
 
-        var result = userJokes
-            .Select(joke => new JokeDTO 
+        if (userJokesResult.IsFailure)
+            return NotFound(userJokesResult.ValidationErrors);
+        
+        IEnumerable<JokeResponse> result = userJokesResult
+            .Value
+            .Select(joke => new JokeResponse 
                 {
                     JokeID = joke.JokeID,
                     Story = joke.Story,
@@ -37,5 +46,4 @@ public class UsersController : Controller
 
         return Ok(result);
     }
-
 }

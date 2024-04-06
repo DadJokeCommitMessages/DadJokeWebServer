@@ -1,6 +1,7 @@
 using DadJokeAPI.Data;
 using DadJokeAPI.Models.Domain;
 using DadJokeAPI.Repositories.Interfaces;
+using DadJokeAPI.Results;
 using Microsoft.EntityFrameworkCore;
 
 namespace DadJokeAPI.Repositories.Implementations;
@@ -14,29 +15,39 @@ public class JokesRepository : IJokesRepository
         _dbContext = dbContext;
     }
 
-    public async Task<Joke> CreateJoke(Joke joke)
+    public Result<Joke> CreateJoke(Joke joke)
     {
-        await _dbContext.Joke.AddAsync(joke);
-        await _dbContext.SaveChangesAsync();
-        return joke;
+        _dbContext.Joke.Add(joke);
+        
+        _dbContext.SaveChanges();
+        
+        return Result.Ok(joke);
     }
 
-    public Task<Joke?> GetRandomJoke(string jokeType)
+    public Result<Joke> GetRandomJoke(string jokeType)
     {
         IQueryable<Joke> query = _dbContext.Joke;
 
         if (jokeType != "random")
         {
+            var existing = _dbContext.JokeType.Any(dbJokeType => dbJokeType.Description == jokeType);
+            if (!existing)
+                return Result.Fail<Joke>
+                    (new ValidationError("jokeType", $"JokeType '{jokeType}' Was Not Found."));
+
             query = query.Where(j => j.JokeType.Description == jokeType);
         }
         
-        var count = query.Count();
-        var randomIndex = new Random().Next(0, count);
-
-        return query
-            .Skip(randomIndex)
+        var result = query
+            .Skip(new Random().Next(0, query.Count()))
             .Include(joke => joke.JokeType)
-            .FirstOrDefaultAsync();
+            .FirstOrDefault();
+        
+        if (result is null) 
+            return Result.Fail<Joke>
+                (new ValidationError("jokeType",   $"No Jokes Found For JokeType '{jokeType}'."));
+
+        return Result.Ok(result);
     }
 
     public async Task<Joke?> GetJokeById(int jokeId)
@@ -55,7 +66,7 @@ public class JokesRepository : IJokesRepository
             .ToListAsync();
     }
 
-    public async Task<Joke?> UpdateJoke(Joke newJoke)
+    public Result<Joke> UpdateJoke(Joke newJoke)
     {
         var existingJoke = _dbContext
             .Joke
@@ -63,34 +74,34 @@ public class JokesRepository : IJokesRepository
             .Include(existing => existing.User)
             .FirstOrDefault(existing => existing.JokeID == newJoke.JokeID);
 
-        if (existingJoke is not null)
-        {
-            _dbContext.Entry(existingJoke).CurrentValues.SetValues(newJoke);
-            existingJoke.JokeType = newJoke.JokeType;
-            existingJoke.User = newJoke.User;
-            
-            await _dbContext.SaveChangesAsync();
-            
-            return newJoke;
-        }
+        if (existingJoke is null)
+            return Result.Fail<Joke>(new ValidationError("JokeId", "Joke For JokeId Does Not Exist."));
 
-        return null;
+        _dbContext.Entry(existingJoke).CurrentValues.SetValues(newJoke);
+        
+        existingJoke.JokeType = newJoke.JokeType;
+        
+        existingJoke.User = newJoke.User;
+        
+        _dbContext.SaveChanges();
+        
+        return Result.Ok(newJoke);
     }
 
-    public async Task<Joke?> DeleteJokeById(int jokeId)
+    public Result<Joke> DeleteJokeById(int jokeId)
     {
-        var existingJoke = await _dbContext
+        var existingJoke = _dbContext
             .Joke
             .Include(existing => existing.JokeType)
-            .FirstOrDefaultAsync(existing => existing.JokeID == jokeId);
+            .FirstOrDefault(existing => existing.JokeID == jokeId);
 
-        if (existingJoke is not null)
-        {
-            _dbContext.Joke.Remove(existingJoke);
-            await _dbContext.SaveChangesAsync();
-            return existingJoke;
-        }
+        if (existingJoke is null)
+            return Result.Fail<Joke>(new ValidationError("JokeId", "Joke For JokeId Does Not Exist."));
 
-        return null;
+        _dbContext.Joke.Remove(existingJoke);
+        
+        _dbContext.SaveChanges();
+        
+        return Result.Ok(existingJoke);
     }
 }

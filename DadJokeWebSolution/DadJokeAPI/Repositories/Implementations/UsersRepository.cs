@@ -1,6 +1,7 @@
 using DadJokeAPI.Data;
 using DadJokeAPI.Models.Domain;
 using DadJokeAPI.Repositories.Interfaces;
+using DadJokeAPI.Results;
 using Microsoft.EntityFrameworkCore;
 
 namespace DadJokeAPI.Repositories.Implementations;
@@ -14,17 +15,35 @@ public class UsersRepository : IUsersRepository
         this._dbContext = dbContext;
     }
 
-    public Task<User?> GetUserByEmail(string emailAddress)
+    public Result<User> GetUserByEmail(string emailAddress)
     {
-        return _dbContext.User.FirstOrDefaultAsync(user => user.EmailAddress == emailAddress);
+        var user = _dbContext
+            .User
+            .FirstOrDefault(user => user.EmailAddress == emailAddress);
+
+        if (user is null)
+            return Result.Fail<User>
+                (new ValidationError("Email", "Email Does Not Link To An Existing User."));
+
+        return Result.Ok(user);
     }
 
-    public async Task<IEnumerable<Joke>> GetAllJokesByUserId(int id)
+    public Result<IEnumerable<Joke>> GetAllJokesByUserId(int userId)
     {
-        return await _dbContext
+        var user = _dbContext
+            .User
+            .FirstOrDefault(user => user.UserID == userId);
+
+        if (user is null)
+            return Result.Fail<IEnumerable<Joke>>
+                (new ValidationError("Email", "Email Does Not Link To An Existing User."));
+
+        IEnumerable<Joke> jokes = _dbContext
             .Joke
             .Include(joke => joke.JokeType)
-            .Where(joke => joke.User.UserID == id).ToListAsync();
-    }
+            .Where(joke => joke.User.UserID == userId)
+            .ToList();
 
+        return Result.Ok(jokes);
+    }
 }

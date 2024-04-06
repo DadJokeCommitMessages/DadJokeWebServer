@@ -1,3 +1,4 @@
+using DadJokeAPI.Converters;
 using DadJokeAPI.Data;
 using DadJokeAPI.Repositories.Implementations;
 using DadJokeAPI.Repositories.Interfaces;
@@ -9,7 +10,6 @@ var builder = WebApplication.CreateBuilder(args);
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
-
 
 builder.Services.AddAuthorization();
 builder.Services.AddControllers();
@@ -32,6 +32,8 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 builder.Services.AddScoped<IUsersRepository, UsersRepository>();
 builder.Services.AddScoped<IJokesRepository, JokesRepository>();
 builder.Services.AddScoped<IJokeTypesRepository, JokeTypesRepository>();
+builder.Services.AddTransient<JokesConverter>();
+builder.Services.AddTransient<UsersConverter>();
 
 var app = builder.Build();
 

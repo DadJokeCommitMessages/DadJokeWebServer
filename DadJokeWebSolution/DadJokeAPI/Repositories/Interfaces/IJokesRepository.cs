@@ -1,16 +1,17 @@
 using DadJokeAPI.Models.Domain;
+using DadJokeAPI.Results;
 
 namespace DadJokeAPI.Repositories.Interfaces;
 
 public interface IJokesRepository
 {
-    Task<Joke> CreateJoke(Joke joke);
+    Result<Joke> CreateJoke(Joke joke);
     
-    Task<Joke?> GetRandomJoke(string jokeType);
+    Result<Joke> GetRandomJoke(string jokeType);
 
     Task<Joke?> GetJokeById(int jokeId);
     
-    Task<Joke?> UpdateJoke(Joke newJoke);
+    Result<Joke> UpdateJoke(Joke newJoke);
     
-    Task<Joke?> DeleteJokeById(int jokeId);
+    Result<Joke> DeleteJokeById(int jokeId);
 }

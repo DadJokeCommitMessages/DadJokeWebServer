@@ -1,6 +1,8 @@
+using DadJokeAPI.Converters;
 using DadJokeAPI.Models.Domain;
 using DadJokeAPI.Models.DTO;
 using DadJokeAPI.Repositories.Interfaces;
+using DadJokeAPI.Results;
 using Microsoft.AspNetCore.Mvc;
 
 namespace DadJokeAPI.Controllers;
@@ -9,64 +11,55 @@ namespace DadJokeAPI.Controllers;
 public class JokesController : Controller
 {
     private readonly IJokesRepository _jokesRepository;
-    private readonly IUsersRepository _usersRepository;
-    private readonly IJokeTypesRepository _jokeTypesRepository;
+    private readonly JokesConverter _jokesConverter;
 
-    public JokesController(IJokesRepository jokesRepository, IUsersRepository usersRepository, IJokeTypesRepository jokeTypesRepository)
+    public JokesController(IJokesRepository jokesRepository, JokesConverter jokesConverter)
     {
         _jokesRepository = jokesRepository;
-        _usersRepository = usersRepository;
-        _jokeTypesRepository = jokeTypesRepository;
+        _jokesConverter = jokesConverter;
     }
 
-    // GET /joke with param ?jokeType=random|fix|feature
     [HttpGet]
-    public async Task<IActionResult> GetRandomJoke(string jokeType = "random")
+    public IActionResult GetRandomJoke(string jokeType = "random")
     {
-        jokeType = jokeType.ToLower();
-        if (jokeType != "random" && await _jokeTypesRepository.GetJokeTypeByDescription(jokeType) is null)
-            return NotFound("JokeType does not exist.");
+        Result<Joke> randomJokeResult = _jokesRepository.GetRandomJoke(jokeType);
         
-        var randomJoke = await _jokesRepository.GetRandomJoke(jokeType);
-        if (randomJoke is null)
-            return NotFound($"No jokes found for JokeType '{jokeType}'.");
-        
-        JokeDTO result = new JokeDTO
+        if (randomJokeResult.IsSuccess)
         {
-            JokeID = randomJoke.JokeID,
-            Story = randomJoke.Story,
-            JokeType = randomJoke.JokeType.Description
-        };
+            Joke randomJoke = randomJokeResult.Value;
+            
+            JokeResponse result = new JokeResponse
+            {
+                JokeID = randomJoke.JokeID,
+                Story = randomJoke.Story,
+                JokeType = randomJoke.JokeType.Description
+            };
+            
+            return Ok(result);
+        }
 
-        return Ok(result);
+        return NotFound(randomJokeResult.ValidationErrors);
     }
     
-    // POST /joke
     [HttpPost]
-    public async Task<IActionResult> CreateJoke([FromBody] CreateJokeRequestDTO request)
+    public IActionResult CreateJoke([FromBody] CreateJokeRequest request)
     {
         if (!ModelState.IsValid)
-            return BadRequest(ModelState);
-
-        var existingJokeType = await _jokeTypesRepository.GetJokeTypeByDescription(request.JokeType);
-        if (existingJokeType is null)
-            return NotFound("JokeType does not exist.");
-    
-        // TODO : This will probably change with the introduction of authentication.
-        var existingUser = await _usersRepository.GetUserByEmail(request.UserEmail);
-        if (existingUser is null)
-            return NotFound("User does not exist.");
-    
-        var entity = new Joke
-        {
-            Story = request.Story,
-            User = existingUser,
-            JokeType = existingJokeType
-        };
-    
-        Joke savedJoke = await _jokesRepository.CreateJoke(entity);
+            return BadRequest(ValidationError.ConvertModelState(ModelState));
         
-        JokeDTO result = new JokeDTO
+        Result<Joke> jokeToSaveResult = _jokesConverter.Convert(request);
+
+        if (jokeToSaveResult.IsFailure)
+            return NotFound(jokeToSaveResult.ValidationErrors);
+        
+        Result<Joke> savedJokeResult = _jokesRepository.CreateJoke(jokeToSaveResult.Value);
+
+        if (savedJokeResult.IsFailure)
+            return NotFound(savedJokeResult.ValidationErrors);
+
+        Joke savedJoke = jokeToSaveResult.Value;
+        
+        JokeResponse result = new JokeResponse
         {
             JokeID = savedJoke.JokeID,
             Story = savedJoke.Story,
@@ -76,38 +69,26 @@ public class JokesController : Controller
         return Ok(result);
     }
 
-    // PUT joke/{jokeId}
     [HttpPut]
     [Route("{jokeId:int}")]
-    public async Task<IActionResult> UpdateJoke([FromRoute] int jokeId, [FromBody] UpdateJokeRequestDTO request)
+    public IActionResult UpdateJoke([FromRoute] int jokeId, [FromBody] UpdateJokeRequest request)
     {
         if (!ModelState.IsValid)
-            return BadRequest(ModelState);
+            return BadRequest(ValidationError.ConvertModelState(ModelState));
+
+        Result<Joke> newJokeResult = _jokesConverter.Convert(jokeId, request);
+
+        if (newJokeResult.IsFailure)
+            return NotFound(newJokeResult.ValidationErrors);
         
-        var existingJokeType = await _jokeTypesRepository.GetJokeTypeByDescription(request.JokeType);
-        if (existingJokeType is null)
-            return NotFound("JokeType does not exist.");
+        Result<Joke> updatedJokeResult = _jokesRepository.UpdateJoke(newJokeResult.Value);
+
+        if (updatedJokeResult.IsFailure)
+            return NotFound(updatedJokeResult.ValidationErrors);
+
+        Joke updatedJoke = updatedJokeResult.Value;
         
-        // TODO : This will probably change with the introduction of authentication.
-        var existingUser = await _usersRepository.GetUserByEmail(request.UserEmail);
-        if (existingUser is null)
-            return NotFound("User does not exist.");
-
-
-        var newJoke = new Joke
-        {
-            JokeID = jokeId,
-            Story = request.Story,
-            User = existingUser,
-            JokeType = existingJokeType
-        };
-
-        var updatedJoke = await _jokesRepository.UpdateJoke(newJoke);
-        
-        if (updatedJoke is null)
-            return NotFound("The JokeId does not link to an existing joke.");
-
-        JokeDTO result = new JokeDTO
+        JokeResponse result = new JokeResponse
         {
             JokeID = updatedJoke.JokeID,
             Story = updatedJoke.Story,
@@ -117,17 +98,18 @@ public class JokesController : Controller
         return Ok(result);
     }
 
-    // DELETE joke/{jokeId}
     [HttpDelete]
     [Route("{jokeId:int}")]
-    public async Task<IActionResult> DeleteJoke([FromRoute] int jokeId)
+    public IActionResult DeleteJoke([FromRoute] int jokeId)
     {
-        var deletedJoke = await _jokesRepository.DeleteJokeById(jokeId);
+        Result<Joke> deletedJokeResult = _jokesRepository.DeleteJokeById(jokeId);
 
-        if (deletedJoke is null)
-            return NotFound("The JokeId does not link to an existing joke.");
+        if (deletedJokeResult.IsFailure)
+            return NotFound(deletedJokeResult.ValidationErrors);
 
-        JokeDTO result = new JokeDTO
+        Joke deletedJoke = deletedJokeResult.Value;
+        
+        JokeResponse result = new JokeResponse
         {
             JokeID = deletedJoke.JokeID,
             Story = deletedJoke.Story,

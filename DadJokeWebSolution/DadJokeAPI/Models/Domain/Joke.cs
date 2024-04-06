@@ -1,5 +1,3 @@
-using System.ComponentModel.DataAnnotations;
-
 namespace DadJokeAPI.Models.Domain;
 
 public class Joke

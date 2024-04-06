@@ -1,6 +1,6 @@
 namespace DadJokeAPI.Models.DTO;
 
-public class JokeDTO
+public class JokeResponse
 {
     public int JokeID { get; set; }
 
