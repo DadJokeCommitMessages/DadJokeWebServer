@@ -35,6 +35,8 @@ builder.Services.AddScoped<IJokeTypesRepository, JokeTypesRepository>();
 builder.Services.AddTransient<JokesConverter>();
 builder.Services.AddTransient<UsersConverter>();
 
+builder.WebHost.UseUrls("http://*:5282");
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.

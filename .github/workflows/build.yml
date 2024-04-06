@@ -1,0 +1,19 @@
+name: Build
+on:
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build:
+    name: 🎉 Build
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash
+        working-directory: ./DadJokeWebSolution
+    steps:
+      - name: 🚚 Get latest code
+        uses: actions/checkout@v2
+
+      - name: Build and publish .NET application
+        run: dotnet publish -c Release

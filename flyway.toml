@@ -1,0 +1,6 @@
+[flyway]
+locations = ["filesystem:db/migrations"]
+
+ 
+[environments.default]
+locations = ["filesystem:db/migrations"]
