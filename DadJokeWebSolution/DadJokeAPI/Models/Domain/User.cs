@@ -3,6 +3,8 @@ namespace DadJokeAPI.Models.Domain;
 public class User
 {
     public int UserID { get; set; }
-    public int GoogleID { get; set; }
-    public int AuthorName { get; set; }
+    
+    public string EmailAddress { get; set; }
+    
+    public string AuthorName { get; set; }
 }
