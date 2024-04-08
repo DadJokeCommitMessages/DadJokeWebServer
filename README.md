@@ -25,7 +25,7 @@ The following environment variable will need to be defined: The connection strin
 The server, database, user and password will need to be populated with your unique combination.
 
 ```
-DadJokeAPIConnectionString = Server=127.0.0.1;Database=postgres;Password=mysecretpassword;User Id=postgres;
+DATABASE_CONNECTION_STRING = Server=127.0.0.1;Database=postgres;Password=mysecretpassword;User Id=postgres;
 ```
 
 The following code in the Program.cs file will use the variable:
@@ -33,7 +33,7 @@ The following code in the Program.cs file will use the variable:
 ```c#
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
 {
-    options.UseNpgsql(Environment.GetEnvironmentVariable("DadJokeAPIConnectionString"));
+    options.UseNpgsql(Environment.GetEnvironmentVariable("DATABASE_CONNECTION_STRING"));
 });
 ```
 
@@ -45,3 +45,6 @@ create a Docker container to connect to and no other software will need to be in
 ```bash
 docker run --name some-postgres -p 5432:5432 -e POSTGRES_PASSWORD=mysecretpassword -d postgres
 ```
+
+Note that the DB will be empty now because Flyway isn't setup locally to run the scripts. The easiest fix would be to 
+run the scripts found in `db/migrations` manually.

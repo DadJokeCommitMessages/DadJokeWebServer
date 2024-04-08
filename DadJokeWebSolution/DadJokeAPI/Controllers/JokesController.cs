@@ -12,11 +12,13 @@ public class JokesController : Controller
 {
     private readonly IJokesRepository _jokesRepository;
     private readonly JokesConverter _jokesConverter;
+    private readonly IUsersRepository _usersRepository;
 
-    public JokesController(IJokesRepository jokesRepository, JokesConverter jokesConverter)
+    public JokesController(IJokesRepository jokesRepository, JokesConverter jokesConverter, IUsersRepository usersRepository)
     {
         _jokesRepository = jokesRepository;
         _jokesConverter = jokesConverter;
+        _usersRepository = usersRepository;
     }
 
     [HttpGet]
@@ -46,8 +48,13 @@ public class JokesController : Controller
     {
         if (!ModelState.IsValid)
             return BadRequest(ValidationError.ConvertModelState(ModelState));
+
+        Result<User> loggedInUserResult = GetLoggedInUser();
+
+        if (loggedInUserResult.IsFailure)
+            return NotFound(loggedInUserResult.ValidationErrors.FirstOrDefault()?.ErrorMessage);
         
-        Result<Joke> jokeToSaveResult = _jokesConverter.Convert(request);
+        Result<Joke> jokeToSaveResult = _jokesConverter.Convert(request, loggedInUserResult.Value);
 
         if (jokeToSaveResult.IsFailure)
             return NotFound(jokeToSaveResult.ValidationErrors);
@@ -76,11 +83,24 @@ public class JokesController : Controller
         if (!ModelState.IsValid)
             return BadRequest(ValidationError.ConvertModelState(ModelState));
 
-        Result<Joke> newJokeResult = _jokesConverter.Convert(jokeId, request);
+        Result<User> loggedInUserResult = GetLoggedInUser();
+        
+        if (loggedInUserResult.IsFailure)
+            return Problem(loggedInUserResult.ValidationErrors.FirstOrDefault()?.ErrorMessage);
+
+        Result<Joke> newJokeResult = _jokesConverter.Convert(jokeId, request, loggedInUserResult.Value);
 
         if (newJokeResult.IsFailure)
             return NotFound(newJokeResult.ValidationErrors);
         
+        Result<Joke> jokeToUpdateResult = _jokesRepository.GetJokeById(jokeId);
+        
+        if (jokeToUpdateResult.IsFailure)
+            return NotFound(jokeToUpdateResult.ValidationErrors);
+
+        if (jokeToUpdateResult.Value.User.UserID != loggedInUserResult.Value.UserID)
+            return Unauthorized(new ValidationError("Unauthorized", "User Cannot Edit A Joke They Did Not Create"));
+            
         Result<Joke> updatedJokeResult = _jokesRepository.UpdateJoke(newJokeResult.Value);
 
         if (updatedJokeResult.IsFailure)
@@ -102,7 +122,20 @@ public class JokesController : Controller
     [Route("{jokeId:int}")]
     public IActionResult DeleteJoke([FromRoute] int jokeId)
     {
-        Result<Joke> deletedJokeResult = _jokesRepository.DeleteJokeById(jokeId);
+        Result<User> loggedInUserResult = GetLoggedInUser();
+        
+        if (loggedInUserResult.IsFailure)
+            return NotFound(loggedInUserResult.ValidationErrors.FirstOrDefault()?.ErrorMessage);
+        
+        Result<Joke> jokeToDeleteResult = _jokesRepository.GetJokeById(jokeId);
+        
+        if (jokeToDeleteResult.IsFailure)
+            return NotFound(jokeToDeleteResult.ValidationErrors);
+        
+        if (jokeToDeleteResult.Value.User.UserID != loggedInUserResult.Value.UserID)
+            return Unauthorized(new ValidationError("Unauthorized", "User Cannot Delete A Joke They Did Not Create"));
+
+        Result<Joke> deletedJokeResult = _jokesRepository.DeleteJoke(jokeToDeleteResult.Value);
 
         if (deletedJokeResult.IsFailure)
             return NotFound(deletedJokeResult.ValidationErrors);
@@ -117,5 +150,15 @@ public class JokesController : Controller
         };
 
         return Ok(result);
+    }
+
+    private Result<User> GetLoggedInUser()
+    {
+        var loggedInUser = HttpContext.Items["loggedInUser"] as User;
+
+        if (loggedInUser is null)
+            return Result.Fail<User>(new ValidationError("Could Not Determine Logged In User"));
+
+        return Result.Ok(loggedInUser);
     }
 }

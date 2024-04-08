@@ -5,9 +5,9 @@ namespace DadJokeAPI.Repositories.Interfaces;
 
 public interface IUsersRepository
 {
-
     Result<User> GetUserByEmail(string emailAddress);
 
     Result<IEnumerable<Joke>> GetAllJokesByUserId(int userId);
 
+    Result<User> SaveUser(User user);
 }

@@ -1,5 +1,6 @@
 using DadJokeAPI.Converters;
 using DadJokeAPI.Data;
+using DadJokeAPI.Middleware;
 using DadJokeAPI.Repositories.Implementations;
 using DadJokeAPI.Repositories.Interfaces;
 using Microsoft.EntityFrameworkCore;
@@ -7,9 +8,7 @@ using Microsoft.EntityFrameworkCore;
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
 
 builder.Services.AddAuthorization();
 builder.Services.AddControllers();
@@ -35,18 +34,12 @@ builder.Services.AddScoped<IJokeTypesRepository, JokeTypesRepository>();
 builder.Services.AddTransient<JokesConverter>();
 builder.Services.AddTransient<UsersConverter>();
 
-builder.WebHost.UseUrls("http://*:5282");
-
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
-
 app.UseHttpsRedirection();
+
+app.UseMiddleware<GoogleAuthenticationMiddleware>();
 
 app.UseAuthorization();
 

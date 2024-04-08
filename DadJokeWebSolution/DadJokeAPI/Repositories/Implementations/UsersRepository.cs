@@ -46,4 +46,13 @@ public class UsersRepository : IUsersRepository
 
         return Result.Ok(jokes);
     }
+
+    public Result<User> SaveUser(User user)
+    {
+        _dbContext.User.Add(user);
+
+        _dbContext.SaveChanges();
+        
+        return Result.Ok(user);
+    }
 }

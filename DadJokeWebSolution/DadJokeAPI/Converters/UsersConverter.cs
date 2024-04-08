@@ -1,3 +1,4 @@
+using DadJokeAPI.Middleware;
 using DadJokeAPI.Models.Domain;
 using DadJokeAPI.Repositories.Interfaces;
 using DadJokeAPI.Results;
@@ -30,7 +31,16 @@ public class UsersConverter
 
         return Result.Ok(loggedInUserResult.Value);
     }
-    
 
+    public Result<User> Convert(GoogleResponse googleUser)
+    {
+        User user = new User
+        {
+            AuthorName = googleUser.Name,
+            EmailAddress = googleUser.Email
+        };
+        
+        return Result.Ok(user);
+    }
     
 }

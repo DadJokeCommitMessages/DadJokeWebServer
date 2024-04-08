@@ -9,9 +9,11 @@ public interface IJokesRepository
     
     Result<Joke> GetRandomJoke(string jokeType);
 
-    Task<Joke?> GetJokeById(int jokeId);
-    
     Result<Joke> UpdateJoke(Joke newJoke);
     
     Result<Joke> DeleteJokeById(int jokeId);
+    
+    Result<Joke> DeleteJoke(Joke joke);
+    
+    Result<Joke> GetJokeById(int jokeId);
 }
