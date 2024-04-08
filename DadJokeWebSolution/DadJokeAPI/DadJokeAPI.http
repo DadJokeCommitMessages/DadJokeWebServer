@@ -12,7 +12,6 @@ Content-Type: application/json
 
 {
   "story": "Hi hungry, I'm dad.",
-  "userEmail": "test@gmail.com",
   "jokeType": "chore"
 }
 

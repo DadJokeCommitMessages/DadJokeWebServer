@@ -1,4 +1,6 @@
 
+using DadJokeAPI.Models.Domain;
+
 namespace DadJokeAPI.Results;
 
 public class Result

@@ -7,4 +7,5 @@ public interface IJokeTypesRepository
 {
     Result<JokeType> GetJokeTypeByDescription(string jokeType);
     Result<IEnumerable<JokeType>> GetAllJokeTypes();
+    Result<JokeType> GetJokeTypeById(int jokeId);
 }

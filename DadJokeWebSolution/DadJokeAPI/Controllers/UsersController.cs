@@ -11,19 +11,17 @@ namespace DadJokeAPI.Controllers;
 public class UsersController : Controller
 {
     private readonly IUsersRepository _usersRepository;
-    private readonly UsersConverter _usersConverter;
 
-    public UsersController(IUsersRepository usersRepository, UsersConverter usersConverter)
+    public UsersController(IUsersRepository usersRepository)
     {
         _usersRepository = usersRepository;
-        _usersConverter = usersConverter;
     }
 
     [HttpGet]
-    [Route("/jokes")]
+    [Route("jokes")]
     public IActionResult GetJokesByUser()
     {
-        Result<User> loggedInUserResult = _usersConverter.Convert();
+        Result<User> loggedInUserResult = GetLoggedInUser();
         
         if (loggedInUserResult.IsFailure) 
             return NotFound(loggedInUserResult.ValidationErrors);
@@ -46,4 +44,15 @@ public class UsersController : Controller
 
         return Ok(result);
     }
+    
+    private Result<User> GetLoggedInUser()
+    {
+        var loggedInUser = HttpContext.Items["loggedInUser"] as User;
+
+        if (loggedInUser is null)
+            Result.Fail<User>(new ValidationError("Could Not Determine Logged In User"));
+
+        return Result.Ok(loggedInUser);
+    }
+
 }

@@ -20,12 +20,9 @@ public class JokesConverter
     }
     
 
-    public Result<Joke> Convert(CreateJokeRequest dto)
+    public Result<Joke> Convert(CreateJokeRequest dto, User loggedInUser)
     {
-        // TODO : Get User Email From Google Header - External request
-        string userEmail = "test@gmail.com";
-        
-        Result<User> loggedInUserResult = _usersRepository.GetUserByEmail(userEmail);
+        Result<User> loggedInUserResult = _usersRepository.GetUserByEmail(loggedInUser.EmailAddress);
 
         if (loggedInUserResult.IsFailure)
             return Result.Fail<Joke>(loggedInUserResult.ValidationErrors);
@@ -45,17 +42,14 @@ public class JokesConverter
         return Result.Ok(result);
     }
 
-    public Result<Joke> Convert(int jokeId, UpdateJokeRequest dto)
+    public Result<Joke> Convert(int jokeId, UpdateJokeRequest dto, User loggedInUser)
     {
         Result<JokeType> existingJokeTypeResult = _jokeTypesRepository.GetJokeTypeByDescription(dto.JokeType);
         
         if (existingJokeTypeResult.IsFailure)
             return Result.Fail<Joke>(existingJokeTypeResult.ValidationErrors);
         
-        // TODO : Get User Email From Google Header - External request
-        string userEmail = "test@gmail.com";
-        
-        Result<User> loggedInUserResult = _usersRepository.GetUserByEmail(userEmail);
+        Result<User> loggedInUserResult = _usersRepository.GetUserByEmail(loggedInUser.EmailAddress);
         
         if (loggedInUserResult.IsFailure)
             return Result.Fail<Joke>(loggedInUserResult.ValidationErrors);

@@ -50,22 +50,6 @@ public class JokesRepository : IJokesRepository
         return Result.Ok(result);
     }
 
-    public async Task<Joke?> GetJokeById(int jokeId)
-    {
-        return await _dbContext
-            .Joke
-            .FirstOrDefaultAsync(joke => joke.JokeID == jokeId);
-    }
-
-    public async Task<IEnumerable<Joke>> GetAllJokesByUser(string userEmail)
-    {
-        return await _dbContext
-            .Joke
-            .Where(joke => joke.User.EmailAddress.Equals(userEmail))
-            .Include(joke => joke.JokeType)
-            .ToListAsync();
-    }
-
     public Result<Joke> UpdateJoke(Joke newJoke)
     {
         var existingJoke = _dbContext
@@ -103,5 +87,28 @@ public class JokesRepository : IJokesRepository
         _dbContext.SaveChanges();
         
         return Result.Ok(existingJoke);
+    }
+
+    public Result<Joke> DeleteJoke(Joke joke)
+    {
+        _dbContext.Joke.Remove(joke);
+        
+        _dbContext.SaveChanges();
+        
+        return Result.Ok(joke);
+    }
+
+    public Result<Joke> GetJokeById(int jokeId)
+    {
+        var joke = _dbContext
+            .Joke
+            .Include(existing => existing.JokeType)
+            .Include(existing => existing.User)
+            .FirstOrDefault(existing => existing.JokeID == jokeId);
+
+        if (joke is null)
+            return Result.Fail<Joke>(new ValidationError("JokeId", "Joke For JokeId Does Not Exist."));
+        
+        return Result.Ok(joke);
     }
 }

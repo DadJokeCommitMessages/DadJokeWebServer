@@ -36,4 +36,17 @@ public class JokeTypesRepository : IJokeTypesRepository
 
         return Result.Ok(jokeTypes);
     }
+
+    public Result<JokeType> GetJokeTypeById(int jokeId)
+    {
+        JokeType? joke = _dbContext
+            .JokeType
+            .FirstOrDefault(jokeType => jokeType.JokeTypeID == jokeId);
+        
+        if (joke is null)
+            return Result.Fail<JokeType>
+                (new ValidationError("jokeType", $"No Joke Associated with JokeId"));
+        
+        return Result.Ok(joke);
+    }
 }
