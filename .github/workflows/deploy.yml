@@ -11,15 +11,15 @@ jobs:
       - name: 🚚 Get latest code
         uses: actions/checkout@v2
 
-      - name: Build and publish .NET application
+      - name: 🔧 Build and publish .NET application
         working-directory: ./DadJokeWebSolution
         run: dotnet publish -c Release
 
-      - name: Create deployment archive
+      - name: 📁 Create deployment archive
         working-directory: ./DadJokeWebSolution
         run: tar -czvf deploy.tar.gz DadJokeAPI/bin/Release/net8.0/publish/
 
-      - name: Deploy to EC2 using SSH
+      - name: 📡 Deploy to EC2 using SSH
         uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.EC2_INSTANCE_IP }}
@@ -28,13 +28,13 @@ jobs:
           source: "./DadJokeWebSolution/deploy.tar.gz"
           target: /home/ubuntu/DadJokesAPI
 
-      - name: RunMigration
+      - name: 🪽 Run flyway migration
         run: |
           wget -qO- https://download.red-gate.com/maven/release/com/redgate/flyway/flyway-commandline/10.11.0/flyway-commandline-10.11.0-linux-x64.tar.gz | tar -xvz && sudo ln -s `pwd`/flyway-10.11.0/flyway /usr/local/bin
           flyway -user="${{ secrets.DB_USERNAME }}" -password="${{ secrets.DB_PASSWORD }}" -url="${{ secrets.DB_URL }}" info
           flyway -user="${{ secrets.DB_USERNAME }}" -password="${{ secrets.DB_PASSWORD }}" -url="${{ secrets.DB_URL }}" migrate
 
-      - name: Run deployment script
+      - name: ☁️ Run deployment script
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.EC2_INSTANCE_IP }}

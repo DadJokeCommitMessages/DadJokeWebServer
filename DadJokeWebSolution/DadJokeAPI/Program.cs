@@ -45,6 +45,8 @@ builder.Services.AddTransient<JokesConverter>();
 
 builder.Services.AddTransient<UsersConverter>();
 
+builder.WebHost.UseUrls("http://*:5282");
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -57,7 +59,5 @@ app.UseMiddleware<GoogleAuthenticationMiddleware>();
 app.UseAuthorization();
 
 app.MapControllers();
-
-builder.WebHost.UseUrls("http://*:5282");
 
 app.Run();
