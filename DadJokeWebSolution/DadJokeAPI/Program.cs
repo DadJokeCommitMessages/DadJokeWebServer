@@ -58,4 +58,6 @@ app.UseAuthorization();
 
 app.MapControllers();
 
+builder.WebHost.UseUrls("http://*:5282");
+
 app.Run();
