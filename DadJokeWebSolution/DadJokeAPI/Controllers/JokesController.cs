@@ -12,13 +12,11 @@ public class JokesController : Controller
 {
     private readonly IJokesRepository _jokesRepository;
     private readonly JokesConverter _jokesConverter;
-    private readonly IUsersRepository _usersRepository;
 
-    public JokesController(IJokesRepository jokesRepository, JokesConverter jokesConverter, IUsersRepository usersRepository)
+    public JokesController(IJokesRepository jokesRepository, JokesConverter jokesConverter)
     {
         _jokesRepository = jokesRepository;
         _jokesConverter = jokesConverter;
-        _usersRepository = usersRepository;
     }
 
     [HttpGet]
