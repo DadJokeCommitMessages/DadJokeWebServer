@@ -15,5 +15,8 @@ jobs:
       - name: 🚚 Get latest code
         uses: actions/checkout@v2
 
-      - name: Build and publish .NET application
+      - name: 👨‍🔬 Run unit tests
+        run: dotnet test
+
+      - name: 🔧 Build and publish .NET application
         run: dotnet publish -c Release
